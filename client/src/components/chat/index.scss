@@ -1,0 +1,38 @@
+.chat-container {
+  margin-top: 50px;
+  .col-md-3,
+  .col-md-5 {
+    padding: 0;
+  }
+  .k-chat {
+    margin-left: 0px;
+  }
+  .user-container {
+    background-color: #fafafa;
+    color: rgba(0, 0, 0, 0.87);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-right: 0px;
+    height: 600px;
+  }
+  .user-list {
+    height: 50px;
+    display: flex;
+    padding: 5px;
+    cursor: pointer;
+  }
+  .user-list:hover {
+    background-color: #eee;
+  }
+  .user-selected {
+    background-color: #ddd !important;
+  }
+  .user-avatar {
+    width: 35px;
+    height: 35px;
+    margin-top: 5px;
+    border-radius: 50%;
+  }
+  .user-title {
+    padding: 10px;
+  }
+}

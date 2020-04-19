@@ -1,0 +1,42 @@
+{
+  "name": "devconnector",
+  "version": "1.0.0",
+  "description": "Social network for developers",
+  "scripts": {
+    "start": "node server",
+    "server": "nodemon server",
+    "client": "npm start --prefix client",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix client && npm run build --prefix client"
+  },
+  "author": "Brad Traversy",
+  "license": "MIT",
+  "dependencies": {
+    "@progress/kendo-drawing": "^1.6.0",
+    "@progress/kendo-react-buttons": "^3.12.0",
+    "@progress/kendo-react-conversational-ui": "^3.12.0",
+    "@progress/kendo-react-inputs": "^3.12.0",
+    "@progress/kendo-react-intl": "^3.12.0",
+    "@progress/kendo-theme-material": "^3.14.0",
+    "axios": "^0.19.2",
+    "bcryptjs": "^2.4.3",
+    "bootstrap": "^4.4.1",
+    "client": "file:client",
+    "config": "^3.3.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-validator": "^6.4.0",
+    "gravatar": "^1.8.0",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.9.5",
+    "node-sass": "^4.13.1",
+    "normalize-url": "^5.0.0",
+    "twilio": "^3.42.2",
+    "twilio-chat": "^3.3.4",
+    "ws": "^7.2.3"
+  },
+  "devDependencies": {
+    "concurrently": "^5.1.0",
+    "nodemon": "^2.0.2"
+  }
+}
