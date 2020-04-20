@@ -35,4 +35,18 @@
   .user-title {
     padding: 10px;
   }
+  .nochannel-container {
+    width: 500px;
+    height: 600px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    color: rgba(0, 0, 0, 0.87);
+    background-color: #fafafa;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .start-button {
+    margin-left: auto;
+    margin-right: auto;
+  }
 }

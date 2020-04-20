@@ -1,5 +1,5 @@
-// const messageHandler = require("./controllers/message");
-// const roomHandler = require('./controllers/room');
+const userHandler = require('../controllers/user');
+const User = require('../models/User');
 
 SocketServer = function (http) {
   // Define Server Socket
@@ -7,36 +7,32 @@ SocketServer = function (http) {
 
   // sockets array
   var sockets = [];
-
   io.on('connection', function (socket) {
-    socket.emit('connected');
-
-    socket.on('subscribe', (data) => {
-      // Set socket username
-      socket.username = data.username;
-
-      // save socket to subscribed sockets
+    socket.on('subscribe', async (data) => {
+      // Set socket email and push it in 'sockets' array
+      const user = await User.findOne({ email: data.email });
+      socket.username = user.name;
+      socket.email = data.email;
       sockets.push(socket);
-
-      // Save user socket to rooms table
-      roomHandler.addClient(data, socket.id);
-      // get Messages in this Chatting room and send it to client socket
-      messageHandler.getMessages(data, socket);
+      userHandler.subscribeUser(sockets, io);
     });
-
-    // on disconnect, remove connected socket
-    socket.on('disconnected', function () {
-      sockets.splice(sockets.indexOf(socket), 1);
+    socket.on('get-userlist', () => {
+      userHandler.subscribeUser(sockets, io);
     });
-
-    socket.on('message', (data) => {
-      // username, roomid, message
-      // On New Message, save to db and send it to clients connected to this room
-
-      const channelSockets = sockets.filter(function (m_soc) {
-        return m_soc.roomid == data.roomid;
+    socket.on('new-channel', async (data) => {
+      const user = await User.findOne({ email: data.email });
+      sockets.forEach((iSocket) => {
+        if (iSocket.email === data.email) {
+          iSocket.emit('get-channels', { channels: user.channels });
+        }
       });
-      messageHandler.sendMessage(data, channelSockets, socket);
+    });
+    // on disconnect, remove connected socket
+    socket.on('disconnected', () => {
+      console.log('disconnected');
+      socket.disconnect(true);
+      sockets.splice(sockets.indexOf(socket), 1);
+      userHandler.subscribeUser(sockets, io);
     });
   });
 };

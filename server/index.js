@@ -4,7 +4,6 @@ const path = require('path');
 const config = require('./config');
 const { chatToken } = require('./tokens');
 const app = express();
-const WebSocket = require('ws');
 
 const sendTokenResponse = (token, res) => {
   res.set('Content-Type', 'application/json');
@@ -14,18 +13,6 @@ const sendTokenResponse = (token, res) => {
     })
   );
 };
-
-const wss = new WebSocket.Server({ port: 3030 });
-
-wss.on('connection', function connection(ws) {
-  ws.on('user-signin', function incoming(data) {
-    wss.clients.forEach(function each(client) {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(data);
-      }
-    });
-  });
-});
 
 // Connect Database
 connectDB();
@@ -57,5 +44,8 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const PORT = process.env.PORT || 5000;
+const http = require('http').Server(app);
+const socketServer = require('./socket');
 
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+http.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+SocketServer(http);

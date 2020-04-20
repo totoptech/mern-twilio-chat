@@ -21,10 +21,6 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  twilioSID: {
-    type: String,
-    required: true
-  },
   channels: { type: Array }
 });
 

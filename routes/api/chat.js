@@ -5,6 +5,8 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_ACCESS_TOKEN;
 const serviceSID = process.env.TWILIO_CHAT_SERVICE_SID;
 const client = require('twilio')(accountSid, authToken);
+const User = require('../../models/User');
+
 router.post('/enable-reachability', (req, res) => {
   client.chat
     .services(serviceSID)
@@ -38,16 +40,21 @@ router.post('/set-online', (req, res) => {
     .catch((error) => console.log(error))
     .then((user) => res.send(user));
 });
-router.post('/add-channel', (req, res) => {
-  const { email1, email2 } = req.body;
-  client
-    .createChannel({
-      uniqueName: email1 + email2
-    })
-    .then(function (channel) {
-      console.log('Created general channel:');
-      console.log(channel);
-      res.send(channel);
-    });
+router.post('/create-channel', async (req, res) => {
+  const { user1, user2 } = req.body;
+  let channels = [];
+  let user = await User.findOne({ email: user1 });
+  if (user) {
+    channels = user.channels;
+    channels.push({ name: user1 + user2, user: user2 });
+    await User.updateOne({ email: user1 }, { channels });
+  }
+  user = await User.findOne({ email: user2 });
+  if (user) {
+    channels = user.channels;
+    channels.push({ name: user1 + user2, user: user1 });
+    await User.updateOne({ email: user2 }, { channels });
+  }
+  res.send({ status: 'success' });
 });
 module.exports = router;
