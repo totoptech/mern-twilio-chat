@@ -29,11 +29,35 @@
   .user-avatar {
     width: 35px;
     height: 35px;
-    margin-top: 5px;
     border-radius: 50%;
+    margin-top: 3px;
   }
   .user-title {
-    padding: 10px;
+    padding-left: 5px;
+    width: 60%;
+    p {
+      padding: 0;
+      margin: 0;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      line-height: 1.4;
+    }
+  }
+  .user-alarm {
+    width: 25%;
+    .user-unchecked {
+      width: 19px;
+      background-color: #0078d4;
+      border-radius: 15px;
+      color: #fff;
+      font-size: 11px;
+      padding-left: 5px;
+      margin-left: auto;
+    }
+    .user-time {
+      display: flex;
+      justify-content: flex-end;
+    }
   }
   .nochannel-container {
     width: 500px;

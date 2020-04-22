@@ -1,73 +1,70 @@
-import React, { useState, useEffect } from 'react';
+import React, { Component } from 'react';
 import { Chat as ChatUI } from '@progress/kendo-react-conversational-ui';
 import '@progress/kendo-theme-material/dist/all.css';
+import { sendNewMessage, checkedMessage } from './socket';
 
-const ChatRoom = (props) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [user, setUser] = useState({
-    id: props.user.email,
-    author: props.user.name,
-    avatarUrl: 'https://via.placeholder.com/24/008000/008000.png'
-  });
-  const [channel, setChannel] = useState(null);
+class ChatApp extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      error: null,
+      messages: []
+    };
 
-  const client = props.client;
-  useEffect(() => {
-    setMessages([]);
-    setupChatClient(props.channelName);
-  }, [props.channelName]);
-  useEffect(() => {
-    if (channel) {
-      channel.on('messageAdded', messageAdded);
+    this.user = {
+      id: props.user.email
+    };
+    this.client = props.client;
+    this.setupChatClient = this.setupChatClient.bind(this);
+    this.messagesLoaded = this.messagesLoaded.bind(this);
+    this.messageAdded = this.messageAdded.bind(this);
+    this.sendMessage = this.sendMessage.bind(this);
+    this.handleError = this.handleError.bind(this);
+    this.twilioMessageToKendoMessage = this.twilioMessageToKendoMessage.bind(
+      this
+    );
+  }
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.channelName !== this.props.channelName) {
+      if (this.channel) this.channel.leave();
+      this.setupChatClient(nextProps.channelName);
     }
-  }, [messages]);
-  const setupChatClient = (channelName) => {
-    let _channel;
+  }
+  handleError(error) {
+    console.error(error);
+    this.setState({
+      error: 'Could not load chat.'
+    });
+  }
+
+  setupChatClient(channelName) {
     if (channelName) {
-      client
+      this.client
         .getChannelByUniqueName(channelName)
         .then((channel) => channel)
         .catch((error) => {
           if (error.body.code === 50300) {
-            return client.createChannel({
-              uniqueName: channelName
-            });
+            return this.client.createChannel({ uniqueName: channelName });
           } else {
-            handleError(error);
+            this.handleError(error);
           }
         })
-        .then((res_channel) => {
-          _channel = res_channel;
-          return _channel.join().catch(() => {});
+        .then((channel) => {
+          this.channel = channel;
+          return this.channel.join().catch(() => {});
         })
         .then(() => {
-          setIsLoading(false);
-          setChannel(_channel);
-          _channel.getMessages().then(messagesLoaded);
+          this.channel.getMessages().then(this.messagesLoaded);
+          this.channel.off('messageAdded', this.messageAdded);
+          this.channel.on('messageAdded', this.messageAdded);
         })
-        .catch(handleError);
-    } else setIsLoading(false);
-  };
-  const messagesLoaded = (messagePage) => {
-    setMessages(messagePage.items.map(twilioMessageToKendoMessage));
-    return messagePage.items.map(twilioMessageToKendoMessage);
-  };
-  const messageAdded = (message) => {
-    setMessages([...messages, twilioMessageToKendoMessage(message)]);
-  };
+        .catch(this.handleError);
+    }
+  }
 
-  const sendMessage = (event) => {
-    if (channel) channel.sendMessage(event.message.text);
-  };
-  const handleError = (error) => {
-    console.error(error);
-    setError('Could not load chat.');
-  };
-  const twilioMessageToKendoMessage = (message) => {
-    const user = props.user;
-    const friend = props.friend;
+  twilioMessageToKendoMessage(message) {
+    const user = this.props.user;
+    const friend = this.props.friend;
     const name = message.author === user.email ? user.name : friend.username;
     return {
       text: message.body,
@@ -79,20 +76,50 @@ const ChatRoom = (props) => {
       },
       timestamp: message.timestamp
     };
-  };
-  return (
-    <>
-      {error ? (
-        <p>{error}</p>
-      ) : (
-        <ChatUI
-          user={user}
-          messages={messages}
-          onMessageSend={sendMessage}
-          width={500}
-        />
-      )}
-    </>
-  );
-};
-export default ChatRoom;
+  }
+
+  messagesLoaded(messagePage) {
+    this.setState({
+      messages: messagePage.items.map(this.twilioMessageToKendoMessage)
+    });
+  }
+
+  messageAdded(message) {
+    this.setState((prevState) => ({
+      messages: [
+        ...prevState.messages,
+        this.twilioMessageToKendoMessage(message)
+      ]
+    }));
+    checkedMessage(this.props.user.email, this.props.friend.email);
+  }
+
+  sendMessage(event) {
+    this.channel.sendMessage(event.message.text);
+    sendNewMessage(
+      this.props.user.email,
+      this.props.friend.email,
+      event.message.text
+    );
+  }
+
+  componentWillUnmount() {
+    this.client.shutdown();
+  }
+
+  render() {
+    if (this.state.error) {
+      return <p>{this.state.error}</p>;
+    }
+    return (
+      <ChatUI
+        user={this.user}
+        messages={this.state.messages}
+        onMessageSend={this.sendMessage}
+        width={500}
+      />
+    );
+  }
+}
+
+export default ChatApp;

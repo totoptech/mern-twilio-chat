@@ -77,6 +77,7 @@ export const login = (email, password) => async (dispatch) => {
       type: LOGIN_SUCCESS,
       payload: res.data
     });
+    console.log('Front-subscribe');
     subscribe(email);
     dispatch(loadUser());
   } catch (err) {

@@ -20,7 +20,7 @@ router.post('/users', (req, res) => {
     .then((users) => res.send(users));
 });
 
-router.post('/add-user', (req, res) => {
+router.post('/new-user', (req, res) => {
   const { email, name } = req.body;
   client.chat
     .services(serviceSID)
@@ -40,21 +40,66 @@ router.post('/set-online', (req, res) => {
     .catch((error) => console.log(error))
     .then((user) => res.send(user));
 });
+
 router.post('/create-channel', async (req, res) => {
-  const { user1, user2 } = req.body;
+  const { senderEmail, receiverEmail, senderName, receiverName } = req.body;
   let channels = [];
-  let user = await User.findOne({ email: user1 });
+  const sender = await User.findOne({ email: senderEmail });
+  const receiver = await User.findOne({ email: receiverEmail });
+  if (sender) {
+    channels = sender.channels;
+    channels.push({
+      name: senderEmail + receiverEmail,
+      friendEmail: receiverEmail,
+      friendName: receiverName,
+      lastmsg: '',
+      unchecked: 0,
+      time: Date.now()
+    });
+    await User.updateOne({ email: senderEmail }, { channels });
+  }
+  if (receiver) {
+    channels = receiver.channels;
+    channels.push({
+      name: senderEmail + receiverEmail,
+      friendEmail: senderEmail,
+      friendName: senderName,
+      lastmsg: '',
+      unchecked: 0,
+      time: Date.now()
+    });
+    await User.updateOne({ email: receiverEmail }, { channels });
+  }
+  res.send({ status: 'success' });
+});
+router.post('/new-message', async (req, res) => {
+  const { receiverEmail, senderEmail, message } = req.body;
+  const user = await User.findOne({ email: receiverEmail });
+  let channels;
   if (user) {
     channels = user.channels;
-    channels.push({ name: user1 + user2, user: user2 });
-    await User.updateOne({ email: user1 }, { channels });
+    const index = channels.findIndex((channel) => channel.user == senderEmail);
+    const unchecked = channels[index].unchecked;
+    channels[index].lastmsg = message;
+    channels[index].unchecked = (unchecked ? unchecked : 0) + 1;
+    channels[index].date = Date.now();
+    await User.updateOne({ email: receiverEmail }, { channels });
   }
-  user = await User.findOne({ email: user2 });
+  console.log(date);
+  res.send({ status: 'success' });
+});
+
+router.post('/checked-message', async (req, res) => {
+  const { receiver, sender } = req.body;
+  const user = await User.findOne({ email: receiver });
+  let channels;
   if (user) {
     channels = user.channels;
-    channels.push({ name: user1 + user2, user: user1 });
-    await User.updateOne({ email: user2 }, { channels });
+    const index = channels.findIndex((channel) => channel.user == sender);
+    channels[index].unchecked = 0;
+    await User.updateOne({ email: receiver }, { channels });
   }
+  console.log(date);
   res.send({ status: 'success' });
 });
 module.exports = router;
