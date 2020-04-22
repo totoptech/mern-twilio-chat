@@ -96,6 +96,7 @@ class ChatApp extends Component {
 
   sendMessage(event) {
     this.channel.sendMessage(event.message.text);
+    this.props.setSelectedIndex(0);
     sendNewMessage(
       this.props.user.email,
       this.props.friend.email,

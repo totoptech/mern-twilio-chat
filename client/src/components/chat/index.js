@@ -130,14 +130,17 @@ const ChatHome = (props) => {
                     onClick={() => handleChangeUser(index)}
                     key={user.email}
                   >
+                    <div
+                      className={(user.status ? 'online ' : '') + 'user-status'}
+                    ></div>
                     <img
                       className="user-avatar"
                       src="https://www.pphfoundation.ca/wp-content/uploads/2018/05/default-avatar.png"
                       alt="user"
                     ></img>
                     <div className="user-title">
-                      <p>{user.username}</p>
-                      <p>{user.lastmsg}</p>
+                      <p className="username">{user.username}</p>
+                      <p className="message">{user.lastmsg}</p>
                     </div>
                     <div className="user-alarm">
                       {user.time && (
@@ -159,6 +162,7 @@ const ChatHome = (props) => {
                       client={client}
                       friend={userList[selectedIndex]}
                       handleChangeChannel={handleChangeChannel}
+                      setSelectedIndex={setSelectedIndex}
                     />
                   ) : (
                     <div className="nochannel-container">

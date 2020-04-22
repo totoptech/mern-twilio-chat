@@ -57,6 +57,7 @@
     .user-time {
       display: flex;
       justify-content: flex-end;
+      color: #666;
     }
   }
   .nochannel-container {
@@ -72,5 +73,19 @@
   .start-button {
     margin-left: auto;
     margin-right: auto;
+  }
+  .user-status {
+    width: 12px;
+    height: 12px;
+    background-color: #dab412;
+    position: absolute;
+    border-radius: 8px;
+  }
+  .online {
+    background-color: #38d400;
+  }
+  .message {
+    color: #666;
+    font-size: 15px;
   }
 }

@@ -6,7 +6,8 @@ function getUserList(sockets) {
       email: socket.email,
       username: socket.username,
       lastmsg: '',
-      unchecked: 0
+      unchecked: 0,
+      status: true
     });
   });
   return user_list;
@@ -15,15 +16,20 @@ async function sendUserList(socket, user_list) {
   const user = await User.findOne({ email: socket.email });
   const added_users = [];
   user.channels.forEach((channel) => {
+    const isExisting = user_list.findIndex(
+      (value) => value.email == channel.friendEmail
+    );
     added_users.push({
       email: channel.friendEmail,
       username: channel.friendName,
       lastmsg: channel.lastmsg,
       unchecked: channel.unchecked,
-      time: channel.time
+      time: channel.time,
+      status: isExisting > -1 ? true : false
     });
     user_list = user_list.filter((value) => value.email != channel.friendEmail);
   });
+  added_users.sort((a, b) => b.time - a.time);
   socket.emit('get-userlist', added_users.concat(user_list));
 }
 
@@ -83,10 +89,8 @@ async function newMessage(senderSocket, sockets, data) {
   );
   if (receiverSocketIndex != -1) {
     const receiverSocket = sockets[receiverSocketIndex];
-    console.log('CHannels11111111111112');
     sendUserList(receiverSocket, user_list);
   }
-  console.log('CHannels2222222222222222222');
   sendUserList(senderSocket, user_list);
 }
 module.exports = { subscribeUser, newMessage, checkedMessage };
