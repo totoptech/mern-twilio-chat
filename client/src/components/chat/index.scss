@@ -13,6 +13,7 @@
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-right: 0px;
     height: 600px;
+    overflow: auto;
   }
   .user-list {
     height: 50px;
@@ -46,18 +47,19 @@
   .user-alarm {
     width: 25%;
     .user-unchecked {
-      width: 19px;
+      width: fit-content;
       background-color: #0078d4;
       border-radius: 15px;
       color: #fff;
       font-size: 11px;
-      padding-left: 5px;
+      padding: 0px 5px;
       margin-left: auto;
     }
     .user-time {
       display: flex;
       justify-content: flex-end;
       color: #666;
+      font-size: 15px;
     }
   }
   .nochannel-container {
@@ -88,4 +90,10 @@
     color: #666;
     font-size: 15px;
   }
+}
+
+.loading-chat {
+  position: absolute;
+  bottom: 60px;
+  left: 193px;
 }

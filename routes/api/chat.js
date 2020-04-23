@@ -65,7 +65,7 @@ router.post('/create-channel', async (req, res) => {
       friendEmail: senderEmail,
       friendName: senderName,
       lastmsg: '',
-      unchecked: 0,
+      unchecked: 'new',
       time: Date.now()
     });
     await User.updateOne({ email: receiverEmail }, { channels });
@@ -81,7 +81,8 @@ router.post('/new-message', async (req, res) => {
     const index = channels.findIndex((channel) => channel.user == senderEmail);
     const unchecked = channels[index].unchecked;
     channels[index].lastmsg = message;
-    channels[index].unchecked = (unchecked ? unchecked : 0) + 1;
+    channels[index].unchecked =
+      (unchecked == 0 || unchecked == 'new' ? 0 : unchecked) + 1;
     channels[index].date = Date.now();
     await User.updateOne({ email: receiverEmail }, { channels });
   }

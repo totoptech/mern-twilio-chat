@@ -10,13 +10,13 @@ import './index.scss';
 import { getUserList, getChannels, newChannel, checkedMessage } from './socket';
 
 const ChatHome = (props) => {
-  const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [channelName, setChannelName] = useState(null);
-  const [isLocked, setIsLocked] = useState(null);
+  const [selectedEmail, setSelectedEmail] = useState(null);
+  const [channelName, setChannelName] = useState(undefined);
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [channels, setChannels] = useState([]);
   const [userList, setUserList] = useState([]);
+
   useEffect(() => {
     const getClient = async () => {
       await axios
@@ -44,9 +44,10 @@ const ChatHome = (props) => {
     console.error(error);
   };
   const handleGetChannels = (data) => {
+    console.log(' I am handle Channels!!!!!!!!!!!!', data.channels);
     setChannels(data.channels);
   };
-
+  console.log('I am channels!!!!!!!!!!!!!!!!!!!!!', channels);
   //Handle GetUserList event
   const handleGetUserList = (data) => {
     console.log('I am get user list', data);
@@ -55,15 +56,16 @@ const ChatHome = (props) => {
         return user.username === props.user.name;
       });
       data.splice(ind, 1);
-      if (data.length === 0) setChannelName(null);
+      if (data.length === 0) setChannelName(undefined);
       setUserList(data);
     }
   };
   const handleStartMessaging = async () => {
     const senderEmail = props.user.email;
     const senderName = props.user.name;
-    const receiverEmail = userList[selectedIndex].email;
-    const receiverName = userList[selectedIndex].username;
+    const index = userList.findIndex((user) => user.email === selectedEmail);
+    const receiverEmail = userList[index].email;
+    const receiverName = userList[index].username;
 
     const res = await axios.post('api/chat/create-channel', {
       senderEmail,
@@ -72,28 +74,21 @@ const ChatHome = (props) => {
       receiverName
     });
     if (res.data.status === 'success') {
+      console.log('SUCESS', channelName, senderEmail + receiverEmail);
       setChannelName(senderEmail + receiverEmail);
-      setIsLocked(false);
       newChannel(receiverEmail);
     }
   };
 
-  const handleChangeUser = (index) => {
-    const channel = channels.find(
-      (channel) => channel.friendEmail === userList[index].email
-    );
+  const handleChangeUser = (email) => {
+    const channel = channels.find((channel) => channel.friendEmail === email);
     if (channel) {
       setChannelName(channel.name);
-      setIsLocked(false);
-      checkedMessage(props.user.email, userList[index].email);
+      checkedMessage(props.user.email, email);
     } else {
       setChannelName(null);
-      setIsLocked(true);
     }
-    setSelectedIndex(index);
-  };
-  const handleChangeChannel = (channel) => {
-    setChannelName(channel);
+    setSelectedEmail(email);
   };
   const getTime = (time) => {
     const date = new Date(time);
@@ -110,7 +105,11 @@ const ChatHome = (props) => {
       date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear()
     );
   };
-  console.log('I am channels', channels);
+  const getSelectedName = () => {
+    const index = userList.findIndex((user) => user.email === selectedEmail);
+    return index > -1 ? userList[index].username : '';
+  };
+
   return (
     <>
       {loading ? (
@@ -124,10 +123,10 @@ const ChatHome = (props) => {
                 {userList.map((user, index) => (
                   <div
                     className={
-                      (index === selectedIndex ? 'user-selected ' : '') +
+                      (user.email === selectedEmail ? 'user-selected ' : '') +
                       'user-list'
                     }
-                    onClick={() => handleChangeUser(index)}
+                    onClick={() => handleChangeUser(user.email)}
                     key={user.email}
                   >
                     <div
@@ -146,7 +145,7 @@ const ChatHome = (props) => {
                       {user.time && (
                         <div className="user-time">{getTime(user.time)}</div>
                       )}
-                      {user.unchecked !== 0 && index !== selectedIndex && (
+                      {user.unchecked !== 0 && user.email !== selectedEmail && (
                         <div className="user-unchecked">{user.unchecked}</div>
                       )}
                     </div>
@@ -155,23 +154,26 @@ const ChatHome = (props) => {
               </div>
               <div className="col-md-7">
                 {props.user &&
-                  (!isLocked ? (
+                  (channelName ? (
                     <ChatRoom
                       user={props.user}
                       channelName={channelName}
                       client={client}
-                      friend={userList[selectedIndex]}
-                      handleChangeChannel={handleChangeChannel}
-                      setSelectedIndex={setSelectedIndex}
+                      friend={{
+                        email: selectedEmail,
+                        username: getSelectedName()
+                      }}
                     />
                   ) : (
                     <div className="nochannel-container">
-                      <button
-                        className="btn btn-danger start-button"
-                        onClick={handleStartMessaging}
-                      >
-                        Start Messaging
-                      </button>
+                      {channelName !== undefined && (
+                        <button
+                          className="btn btn-danger start-button"
+                          onClick={handleStartMessaging}
+                        >
+                          Start Messaging
+                        </button>
+                      )}
                     </div>
                   ))}
               </div>

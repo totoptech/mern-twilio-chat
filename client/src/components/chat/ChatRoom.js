@@ -8,7 +8,8 @@ class ChatApp extends Component {
     super(props);
     this.state = {
       error: null,
-      messages: []
+      messages: [],
+      isLoading: null
     };
 
     this.user = {
@@ -24,9 +25,13 @@ class ChatApp extends Component {
       this
     );
   }
+  componentDidMount() {
+    this.setupChatClient(this.props.channelName);
+  }
   componentWillReceiveProps(nextProps) {
+    console.log('Channel Name:', nextProps.channelName);
     if (nextProps.channelName !== this.props.channelName) {
-      if (this.channel) this.channel.leave();
+      if (this.channel) this.channel.off('messageAdded', this.messageAdded);
       this.setupChatClient(nextProps.channelName);
     }
   }
@@ -39,11 +44,13 @@ class ChatApp extends Component {
 
   setupChatClient(channelName) {
     if (channelName) {
+      console.log('I am channel', channelName);
       this.client
         .getChannelByUniqueName(channelName)
         .then((channel) => channel)
         .catch((error) => {
           if (error.body.code === 50300) {
+            this.setState({ isLoading: true });
             return this.client.createChannel({ uniqueName: channelName });
           } else {
             this.handleError(error);
@@ -54,6 +61,8 @@ class ChatApp extends Component {
           return this.channel.join().catch(() => {});
         })
         .then(() => {
+          console.log('SETSTATE');
+          this.setState({ isLoading: false });
           this.channel.getMessages().then(this.messagesLoaded);
           this.channel.off('messageAdded', this.messageAdded);
           this.channel.on('messageAdded', this.messageAdded);
@@ -85,6 +94,7 @@ class ChatApp extends Component {
   }
 
   messageAdded(message) {
+    console.log('MESSAGE ADDED:', message, this.channel.sid);
     this.setState((prevState) => ({
       messages: [
         ...prevState.messages,
@@ -95,30 +105,32 @@ class ChatApp extends Component {
   }
 
   sendMessage(event) {
-    this.channel.sendMessage(event.message.text);
-    this.props.setSelectedIndex(0);
-    sendNewMessage(
-      this.props.user.email,
-      this.props.friend.email,
-      event.message.text
-    );
-  }
-
-  componentWillUnmount() {
-    this.client.shutdown();
+    if (this.channel) {
+      this.channel.sendMessage(event.message.text);
+      console.log('SEND MESSAGE:', this.props.user, this.props.friend);
+      sendNewMessage(
+        this.props.user.email,
+        this.props.friend.email,
+        event.message.text
+      );
+    }
   }
 
   render() {
     if (this.state.error) {
       return <p>{this.state.error}</p>;
     }
+    console.log('This is ChatRoom Props', this.props.channelName);
     return (
-      <ChatUI
-        user={this.user}
-        messages={this.state.messages}
-        onMessageSend={this.sendMessage}
-        width={500}
-      />
+      <>
+        {this.state.isLoading && <p className="loading-chat">Loading...</p>}
+        <ChatUI
+          user={this.user}
+          messages={this.state.messages}
+          onMessageSend={this.sendMessage}
+          width={500}
+        />
+      </>
     );
   }
 }

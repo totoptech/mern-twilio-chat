@@ -34,13 +34,7 @@ SocketServer = function (http) {
       userHandler.newMessage(socket, sockets, data);
     });
     socket.on('new-channel', async (data) => {
-      console.log('New Channel!!!', socket.id, data.email);
-      const user = await User.findOne({ email: data.email });
-      sockets.forEach((iSocket) => {
-        if (iSocket.email === data.email) {
-          iSocket.emit('get-channels', { channels: user.channels });
-        }
-      });
+      userHandler.newChannel(socket, sockets, data);
     });
     // on disconnect, remove connected socket
     socket.on('disconnected', () => {

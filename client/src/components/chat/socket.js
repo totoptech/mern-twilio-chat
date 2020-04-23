@@ -20,7 +20,7 @@ export function checkedMessage(senderEmail, receiverEmail) {
   socket.emit('checked-message', { senderEmail, receiverEmail });
 }
 export function disconnect() {
-  socket.emit('disconnected');
+  if (socket) socket.emit('disconnected');
 }
 export function getChannels(handleGetChannels) {
   socket.on('get-channels', handleGetChannels);

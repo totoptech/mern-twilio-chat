@@ -60,6 +60,7 @@ async function newMessage(senderSocket, sockets, data) {
   const sender = await User.findOne({ email: senderEmail });
   const receiver = await User.findOne({ email: receiverEmail });
   let channels = [];
+  console.log(senderEmail, receiverEmail, message);
   if (sender) {
     channels = sender.channels;
     const index = channels.findIndex(
@@ -75,8 +76,10 @@ async function newMessage(senderSocket, sockets, data) {
     const index = channels.findIndex(
       (channel) => channel.friendEmail == senderEmail
     );
+    const unchecked = channels[index].unchecked;
     channels[index].lastmsg = message;
-    channels[index].unchecked++;
+    channels[index].unchecked =
+      (unchecked == 0 || unchecked == 'new' ? 0 : unchecked) + 1;
     channels[index].time = Date.now();
     await User.updateOne({ email: receiverEmail }, { channels });
   }
@@ -93,4 +96,20 @@ async function newMessage(senderSocket, sockets, data) {
   }
   sendUserList(senderSocket, user_list);
 }
-module.exports = { subscribeUser, newMessage, checkedMessage };
+
+async function newChannel(socket, sockets, data) {
+  console.log('New Channel!!!', socket.id, data.email);
+  const sender = await User.findOne({ email: socket.email });
+  socket.emit('get-channels', { channels: sender.channels });
+
+  const receiver = await User.findOne({ email: data.email });
+  const receiverSocketIndex = sockets.findIndex(
+    (iSocket) => iSocket.email == data.email
+  );
+  sockets[receiverSocketIndex].emit('get-channels', {
+    channels: receiver.channels
+  });
+  const user_list = getUserList(sockets);
+  sendUserList(sockets[receiverSocketIndex], user_list);
+}
+module.exports = { subscribeUser, newMessage, checkedMessage, newChannel };
